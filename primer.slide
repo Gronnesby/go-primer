@@ -1,0 +1,428 @@
+
+Go Primer
+
+Morten Grønnesby
+PhD Student, University of Tromsø
+morten.gronnesby@uit.no
+
+
+* Go
+
+- Systems implementation.
+- Compiled, and compiles fast.
+- Concurrency and Parallelism.
+- Strict compiler.
+- Small language with few but powerful features.
+- Relatively new (1.0 in 2009).
+
+.image img/go.jpg _ 200
+
+
+* Installing
+
+Binaries and install instructions can be found at:
+[[https://golang.org/dl/]]
+
+For OSX, Golang are available on Homebrew as well.
+
+* Setting up GOPATH
+
+`GOROOT` is the go executable.
+`GOPATH` is the go workspace.
+
+`GOROOT` is by default set automatically to the install location,
+but can also be set manually.
+
+    /usr/local/go/
+
+
+`GOPATH` is by default set to `$HOME/go`
+
+My `.bash_profile`:
+
+    GOPATH=$HOME/go
+    export PATH="$GOPATH:$PATH"
+    export PATH="$GOPATH/bin:$PATH"
+
+* Keywords
+
+    break        default      func         interface    select
+    case         defer        go           map          struct
+    chan         else         goto         package      switch
+    const        fallthrough  if           range        type
+    continue     for          import       return       var
+
+* Basic types
+
+    bool
+
+    string
+
+    int  int8  int16  int32  int64
+    uint uint8 uint16 uint32 uint64 uintptr
+
+    byte // alias for uint8
+
+    rune // alias for int32
+         // represents a Unicode code point
+
+    float32 float64
+
+    complex64 complex128
+
+
+
+* Variables
+
+All variable declarations start with `var`, and the type is written after the variable name
+    
+    var sum int  // Declare
+    var total int = 0  // Declare and initialize
+
+Pointers
+
+    var a, b *int // Declares two pointers to int
+
+One rarely declares variables in go, but directly declares and initializes using `:=`
+
+    mynum := 0  // Type inference
+
+Lines do not end with semi-colons in 
+
+* If
+
+Parentheses are omitted
+
+    result := someFunc()
+    if result == "someval" {
+        // Do something
+    } else if result == "someotherval" {
+        // Do something else
+    } else {
+        // Do something different
+    }
+
+Scoping the variable to the if test
+
+    if result := someFunc(); result == "someval" {
+        // Do something
+    } else if result == "someotherval" {
+        // Do something else
+    } else {
+        // Do different
+    }
+
+* Switch
+
+Switch with assignment
+.code src/switches.go /START OMIT/,/END OMIT/
+
+Switches without conditions (switch true)
+.code src/switches.go /END OMIT/,/LAST OMIT/
+
+* Loops
+
+Golang only has one loop keyword: `for`
+
+Conditional, while functionality
+    
+    for a > b { }
+
+Initialize, condition, step 
+
+    for i := 0; i < 10; i++ { }
+
+Range
+
+    for i, val := range "string,slice,array" { }
+
+Omitting range arguments
+
+    for _, val := range myArray { }
+
+* Arrays and Slices
+
+Arrays in Go have a fixed size, and cannot be resized
+
+    arr := [5]int{1, 2, 3, 4, 5}
+
+Arrays of strings can be done without pointers
+
+    var arr [2]string
+    arr[0] = "Hello"
+    arr[1] = "World"
+
+Slices are dynamically sized views into arrays and can be resized
+
+    var arr [6]int{1,2,3,4,5,6}
+    s := arr[1:3] // s = {2, 3}
+
+Slices are only views of the underlying array, and does not store any data.
+
+    s := make([]int, 20) // Creates an array with [20]int and returns a slice view
+    append(s, 1,2)       // Appends values to the slice (and manipulates the underlying array) 
+
+
+* Maps
+
+Go implements map or dictionary structures using hashmaps
+
+    m := make(map[string]int)
+    m["key"] = 0                // Adds the key "key" if it does not exist
+
+Keys can be tested for existense
+
+    
+    if val, exist := m["k"]; exist {
+        fmt.Printf("Value %d exists\n", val)
+    }
+
+Maps can also be ranged over
+
+    for key, val := range m {
+        fmt.Println(key, val)
+    }
+
+
+* Functions
+
+Functions starts with the `func` keyword, and ends with return types
+
+    func doWork(a int) int {
+        return 0
+    }
+
+Multiple return values, most go functions returns a value and an error (error = nil if success)
+
+    func doWork(a, b int) (int, error) {
+        return 0, nil
+    }
+
+Named return values
+
+    func doWork(a, b int, str string) (i int, err error) {
+        i = a + b
+        err = nil
+        return i, err
+    }
+
+
+* Error handling
+
+Checking error return values is quite normal in Go
+
+    val, err := funcThatCanFail()
+    if err != nil {
+        panic(err)
+    }
+
+But this is a feature subject for change in Go 2.0,
+since this requires a lot of boilerplate code.
+
+
+* Methods
+
+Function with a receiver argument
+
+    type Vertex struct {
+        X, Y float64
+    }
+
+    func (v Vertex) Abs() float64 {
+        return math.Sqrt(v.X*v.X + v.Y*v.Y)
+    }
+
+Pointer receiver arguments can manipulate the receiver struct
+
+    func (v *Vertex) Scale(f float64) {
+        v.X = v.X * f
+        v.Y = v.Y * f
+    }
+
+
+* Interfaces
+
+Any type that implements an interface, can be used where that interface can
+
+    type I interface {
+        M()
+    }
+
+    type T struct {
+        S string
+    }
+
+    // This method means type T implements the interface I,
+    // but we don't need to explicitly declare that it does so.
+    func (t T) M() {
+        fmt.Println(t.S)
+    }
+
+    func main() {
+        var i I = T{"hello"}
+        i.M()
+    }
+
+
+* Type Assertion
+
+Accessing the underlying type of an interface can be done through type assertion
+
+.play src/typeassert.go
+
+
+* Goroutines
+
+Goroutines are Golangs take on lightweight threads.
+That said, a goroutine is not an OS Thread.
+
+Goroutines live in the virtual space of of the Go Runtime.
+They require few resources to create and run initially (2 KB stack size).
+
+Creating a goroutine can be done with the `go` keyword.
+
+.code src/basicGoroutines.go /START OMIT/,/FIRST OMIT/
+
+
+* Goroutines cont.
+
+Function closures can be used to spawn goroutines.
+
+.code src/basicGoroutines.go /FIRST OMIT/,/LAST OMIT/
+
+The loop will increment a waitgroup counter and spawn a goroutine that decrements it.
+The `defer` keyword means that the action will be performed before the fuction exits.
+
+* Channels
+
+Communication with goroutines uses channels.
+
+.play -edit src/channels.go
+
+
+* Packages
+#.play src/hello.go
+All Go programs is made up of packages.
+Every .go file requires a single package declaration
+
+    package main
+
+Importing packages
+
+    import (
+        "fmt"
+        "log" // Go will not compile with unused imports
+    )
+
+
+The main function of the main package is the entrypoint of the program
+
+    func main() {
+        fmt.Println("Hello World")
+    }
+
+
+
+* Packages
+
+Much like Python, packages are organized using directories in source folders.
+
+    repo/
+        importing.go
+        mypackage/
+            pkg.go
+
+When implementing pkg.go, we need to export functions intended for use.
+Similar to `private`, `public` and `protected` modifiers in OO.
+
+
+* pkg.go
+.code src/mypackage/pkg.go
+
+
+* Packages cont.
+
+.play -edit src/importing.go
+
+* Code Organization
+
+    $GOPATH/
+        bin/
+            present
+            importing
+        src/
+            golang.org/x/tools/
+                present/
+                    code.go
+                    link.go
+                    ...
+            github.com/
+                gronnesby/
+                    go-primer/
+                        importing.go
+                        mypackage/
+                            pkg.go
+                    someotherrepo/
+                        ...
+                someothergithubaccount/
+                    ...
+
+
+* The go program
+go itself is a toolbox, rather than just a compiler.
+
+    go <command> [arguments]
+    bug         start a bug report
+    build       compile packages and dependencies
+    clean       remove object files and cached files
+    doc         show documentation for package or symbol
+    env         print Go environment information
+    fix         update packages to use new APIs
+    fmt         gofmt (reformat) package sources
+    generate    generate Go files by processing source
+    get         download and install packages and dependencies
+    install     compile and install packages and dependencies
+    list        list packages or modules
+    mod         module maintenance
+    run         compile and run Go program
+    test        test packages
+    tool        run specified go tool
+    version     print Go version
+    vet         report likely mistakes in packages
+
+
+
+* Tips and tricks
+
+- Use an IDE that runs gofmt (VS Code, GoLand, GoVIM)
+- Always check your errors
+- Use the go tools (pprof, doc, cgo, objdump)
+- Document your code with comments
+
+
+* Sources and more information
+
+The code examples used can be found at:
+
+.link https://tour.golang.org/welcome/1 Golangs Tour of Go
+
+.link https://www.infoq.com/articles/google-go-primer Go a primer
+
+.link https://www.murrayc.com/permalink/2017/06/26/a-c-developer-looks-at-go-the-programming-language-part-1-simple-features/ C++ developer looks at Go
+
+*Talks*
+
+.link https://www.youtube.com/watch?v=cN_DpYBzKso Rob Pike - Concurrency is not Parallelism
+
+.link https://www.youtube.com/watch?v=rFejpH_tAHM Rob Pike - Simplicity is complicated
+
+.link https://www.youtube.com/watch?v=6wIP3rO6On8 Russ Cox - Go 2 Draft Announcement 
+
+*Books*
+
+.link https://www.amazon.com/Programming-Language-Addison-Wesley-Professional-Computing/dp/0134190440 The Go Programming Language 
+
+
+* Finnlandsfjellet
+
+.background img/finnlandsfjellet.jpg
